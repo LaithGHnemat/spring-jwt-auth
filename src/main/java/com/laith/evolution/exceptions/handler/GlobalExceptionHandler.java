@@ -35,9 +35,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NotFoundClientException.class)
-    public ResponseEntity<ErrorResponseDto> handleNotFoundClient(InvalidTokenException ex) {
+    public ResponseEntity<ErrorResponseDto> handleNotFoundClient(NotFoundClientException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponseDto("BAD_REQUEST", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ErrorResponseDto> handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponseDto("invalid_refresh_token", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

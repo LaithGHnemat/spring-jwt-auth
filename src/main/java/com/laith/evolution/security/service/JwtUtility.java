@@ -81,8 +81,7 @@ public class JwtUtility {
 
     // Extracts all claims from the JWT token using the signing key
     private Claims extractAllClaims(String token) {
-        return Jwts
-                .parserBuilder()
+        return Jwts.parserBuilder()
                 .setSigningKey(getSignInKey())
                 .build()
                 .parseClaimsJws(token)

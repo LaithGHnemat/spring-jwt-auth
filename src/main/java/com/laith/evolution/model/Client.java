@@ -32,4 +32,9 @@ public class Client {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
+    @OneToMany(mappedBy = "client",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY)
+    private Set<RefreshToken> refreshTokens;
+
 }

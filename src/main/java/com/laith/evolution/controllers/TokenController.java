@@ -1,5 +1,6 @@
 package com.laith.evolution.controllers;
 
+import com.laith.evolution.dto.RefreshTokenRequest;
 import com.laith.evolution.dto.TokenRequestDto;
 import com.laith.evolution.dto.TokenResponseDto;
 import com.laith.evolution.services.TokenService;
@@ -7,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/oauth")
@@ -26,8 +29,14 @@ public class TokenController {
         return ResponseEntity.ok(tokenResponse);
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponseDto> refreshToken(@RequestBody RefreshTokenRequest request) {
+        TokenResponseDto tokenResponse = tokenService.refreshJwtToken(request.getRefreshToken());
+        return ResponseEntity.ok(tokenResponse);
+    }
+
     private TokenRequestDto getTokenRequestDto(String clientId, String clientSecret,
-                                               String grantType, String scope) {
+    String grantType, String scope) {
         return TokenRequestDto.builder()
                 .clientId(clientId)
                 .clientSecret(clientSecret)

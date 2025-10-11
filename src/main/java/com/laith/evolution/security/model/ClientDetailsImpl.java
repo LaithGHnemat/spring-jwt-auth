@@ -1,6 +1,5 @@
 package com.laith.evolution.security.model;
 
-
 import com.laith.evolution.model.Client;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -8,7 +7,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 @RequiredArgsConstructor
 public final class ClientDetailsImpl implements UserDetails {
 
@@ -16,7 +14,8 @@ public final class ClientDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return client.getRoles().stream()
+        return client.getRoles()
+                .stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
                 .toList();
     }

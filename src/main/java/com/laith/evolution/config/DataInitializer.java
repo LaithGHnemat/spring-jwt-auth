@@ -27,31 +27,33 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner myCommandLineRunner() {
         return args -> {
-            clientRepository.deleteAll();
-            roleRepository.deleteAll();
-
-            Role clientRole = Role.builder().name("CLIENT").build();
-            Role userRole = Role.builder().name("USER").build();
-            roleRepository.save(clientRole);
-            roleRepository.save(userRole);
-
-            Client client = Client.builder()
-                    .clientId("test-client")
-                    .clientSecret(passwordEncoder.encode("secret123"))
-                    .scope("pos")
-                    .roles(Set.of(clientRole))
-                    .build();
-            clientRepository.save(client);
-            log.info("Default client inserted successfully! clientId=" + client.getClientId());
-
-            Client userClient = Client.builder()
-                    .clientId("test-user")
-                    .clientSecret(passwordEncoder.encode("user123"))
-                    .scope("pos")
-                    .roles(Set.of(userRole))
-                    .build();
-            clientRepository.save(userClient);
-            log.info("User client inserted successfully! clientId=" + userClient.getClientId());
+            insertData();
         };
+    }
+
+    private void insertData() {
+        clientRepository.deleteAll();
+        roleRepository.deleteAll();
+
+        Role clientRole = Role.builder().name("CLIENT").build();
+        Role userRole = Role.builder().name("USER").build();
+        roleRepository.save(clientRole);
+        roleRepository.save(userRole);
+
+        Client client = Client.builder()
+                .clientId("test-client")
+                .clientSecret(passwordEncoder.encode("secret123"))
+                .scope("pos")
+                .roles(Set.of(clientRole))
+                .build();
+        clientRepository.save(client);
+
+        Client userClient = Client.builder()
+                .clientId("test-user")
+                .clientSecret(passwordEncoder.encode("user123"))
+                .scope("pos")
+                .roles(Set.of(userRole))
+                .build();
+        clientRepository.save(userClient);
     }
 }

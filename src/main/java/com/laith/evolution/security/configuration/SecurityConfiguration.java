@@ -35,13 +35,12 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/oauth/token").permitAll()
+                        .requestMatchers("/api/oauth/**").permitAll()
                         .requestMatchers("/api/data/client/**").hasRole("CLIENT")
                         .requestMatchers("/api/data/user/**").hasRole("USER")
                         .anyRequest().authenticated())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .anonymous(AbstractHttpConfigurer::disable)
                 .addFilterBefore(globalJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)

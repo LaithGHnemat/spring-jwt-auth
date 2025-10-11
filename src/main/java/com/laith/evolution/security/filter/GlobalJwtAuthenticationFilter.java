@@ -33,10 +33,11 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtility jwtService;
     private final ClientRepository clientRepository;
+    private static final List<String> EXCLUDED_PATHS = List.of("/api/oauth/token", "/api/oauth/refresh");
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getServletPath().startsWith("/api/oauth/token");
+        return EXCLUDED_PATHS.stream().anyMatch(request.getServletPath()::startsWith);
     }
 
     @Override

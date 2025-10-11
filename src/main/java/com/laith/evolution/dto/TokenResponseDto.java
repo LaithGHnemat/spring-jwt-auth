@@ -16,4 +16,6 @@ public class TokenResponseDto {
     private long expiresIn;
     @JsonProperty("scope")
     private String scope;
+    @JsonProperty("refresh_token")
+    private String refreshToken;
 }
