@@ -1,23 +1,16 @@
 package com.laith.evolution.security.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.laith.evolution.dto.ErrorResponseDto;
-import com.laith.evolution.security.filter.ClientJwtAuthenticationFilter;
-/*
-import com.laith.evolution.security.filter.UserJwtAuthenticationFilter;
-*/
 import com.laith.evolution.security.filter.GlobalJwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletResponse;
+import com.laith.evolution.security.handler.JwtAccessDeniedHandler;
+import com.laith.evolution.security.handler.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -34,11 +27,12 @@ import java.util.List;
 @Order(2)
 public class SecurityConfiguration {
 
-    //Method Dependency Injection
+    private final GlobalJwtAuthenticationFilter globalJwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-    ClientJwtAuthenticationFilter clientFilter, GlobalJwtAuthenticationFilter globalJwtAuthenticationFilter)
-            throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/oauth/token").permitAll()
@@ -47,36 +41,14 @@ public class SecurityConfiguration {
                         .anyRequest().authenticated())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .anonymous(AbstractHttpConfigurer::disable)
                 .addFilterBefore(globalJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(clientFilter, GlobalJwtAuthenticationFilter.class)
-              //  .addFilterBefore(userFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(getExceptionHandlingCustomizer());
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler));
         return http.build();
     }
 
-    private Customizer<ExceptionHandlingConfigurer<HttpSecurity>> getExceptionHandlingCustomizer() {
-        return ex -> ex
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    ObjectMapper mapper = new ObjectMapper();
-                    response.getWriter().write(mapper.writeValueAsString(
-                            ErrorResponseDto.builder()
-                                    .error("unauthorized")
-                                    .errorDescription("Token expired or invalid").build()
-                    ));
-                })
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.setContentType("application/json");
-                    ObjectMapper mapper = new ObjectMapper();
-                    response.getWriter().write(mapper.writeValueAsString(
-                            ErrorResponseDto.builder()
-                                    .error("forbidden")
-                                    .errorDescription("Access denied: insufficient role").build()
-                    ));
-                });
-    }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {

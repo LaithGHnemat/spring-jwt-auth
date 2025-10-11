@@ -1,5 +1,12 @@
 package com.laith.evolution.security.filter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.laith.evolution.dto.ErrorResponseDto;
+import com.laith.evolution.model.Client;
+import com.laith.evolution.repositories.ClientRepository;
+import com.laith.evolution.security.model.ClientDetailsImpl;
 import com.laith.evolution.security.service.JwtUtility;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -7,15 +14,17 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Log
 @Component
@@ -23,6 +32,12 @@ import java.util.Objects;
 public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtility jwtService;
+    private final ClientRepository clientRepository;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getServletPath().startsWith("/api/oauth/token");
+    }
 
     @Override
     protected void doFilterInternal(
@@ -37,29 +52,57 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        final String jwt = authHeader.substring(7).trim();
+
         try {
-            final String jwt = authHeader.substring(7).trim();
-            String username = jwtService.extractUsername(jwt);
+            String clientId = jwtService.extractUsername(jwt);
 
-            if (Objects.nonNull(username) && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (Objects.nonNull(clientId) &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
+                Client client = clientRepository.findByClientId(clientId)
+                        .orElseThrow(() -> new BadCredentialsException("Client not found"));
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                List.of()
-                        );
+                if (!jwtService.isTokenValid(jwt, new ClientDetailsImpl(client))) {
+                    sendErrorResponse(response, "Invalid token", HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-              //  log.fine(() -> "Authentication set for user: ");
+                List<SimpleGrantedAuthority> authorities = client.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                        .collect(Collectors.toList());
+
+                SecurityContextHolder.getContext().setAuthentication(
+                        new UsernamePasswordAuthenticationToken(client, null, authorities)
+                );
+
+                log.info(() -> "JWT token is valid for client: " + clientId);
             }
 
             filterChain.doFilter(request, response);
 
+        } catch (ExpiredJwtException e) {
+            log.warning("JWT expired: " + e.getMessage());
+            sendErrorResponse(response, "Token expired", HttpServletResponse.SC_UNAUTHORIZED);
+
+        } catch (BadCredentialsException e) {
+            sendErrorResponse(response, "Invalid token", HttpServletResponse.SC_UNAUTHORIZED);
+
         } catch (Exception e) {
-            log.warning("Invalid token: " + e.getMessage());
-            filterChain.doFilter(request, response);
+            log.severe("Server error: " + e.getMessage());
+            sendErrorResponse(response, "Server error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, String message, int status) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        ObjectMapper mapper = new ObjectMapper();
+        response.getWriter().write(mapper.writeValueAsString(
+                ErrorResponseDto.builder()
+                        .error(status == HttpServletResponse.SC_UNAUTHORIZED ?
+                                "unauthorized" : "server_error")
+                        .errorDescription(message)
+                        .build()));
     }
 }

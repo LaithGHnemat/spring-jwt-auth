@@ -27,7 +27,7 @@ public class TokenController {
     }
 
     private TokenRequestDto getTokenRequestDto(String clientId, String clientSecret,
-    String grantType, String scope) {
+                                               String grantType, String scope) {
         return TokenRequestDto.builder()
                 .clientId(clientId)
                 .clientSecret(clientSecret)

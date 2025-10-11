@@ -2,14 +2,15 @@ package com.laith.evolution.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
 
-@Entity
-@Table(name = "clients")
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Entity
+@Table(name = "clients")
 public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,4 +24,12 @@ public class Client {
 
     @Column(nullable = false)
     private String scope;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "client_roles",
+            joinColumns = @JoinColumn(name = "client_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles;
+
 }

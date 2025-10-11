@@ -10,14 +10,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 @RequiredArgsConstructor
-public class ClientDetailsImpl implements UserDetails {
-    // this called Adapter design patterns
+public final class ClientDetailsImpl implements UserDetails {
 
     private final Client client;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_CLIENT"));
+        return client.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .toList();
     }
 
     @Override
@@ -26,7 +27,9 @@ public class ClientDetailsImpl implements UserDetails {
     }
 
     @Override
-    public String getUsername() {return client.getClientId();}
+    public String getUsername() {
+        return client.getClientId();
+    }
 
     @Override
     public boolean isAccountNonExpired() { return true; }

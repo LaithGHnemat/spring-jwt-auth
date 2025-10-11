@@ -4,7 +4,6 @@ import com.laith.evolution.dto.TokenRequestDto;
 import com.laith.evolution.dto.TokenResponseDto;
 import com.laith.evolution.exceptions.InvalidClientCredentialsException;
 import com.laith.evolution.exceptions.InvalidScopeException;
-import com.laith.evolution.exceptions.InvalidTokenException;
 import com.laith.evolution.exceptions.UnsupportedGrantTypeException;
 import com.laith.evolution.model.Client;
 import com.laith.evolution.repositories.ClientRepository;
