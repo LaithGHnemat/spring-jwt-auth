@@ -7,6 +7,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 @RequiredArgsConstructor
 public final class ClientDetailsImpl implements UserDetails {
 
@@ -14,10 +17,13 @@ public final class ClientDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return client.getRoles()
-                .stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-                .toList();
+        Stream<GrantedAuthority> roleStream = client.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()));
+        Stream<GrantedAuthority> permissionStream = client.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(p -> new SimpleGrantedAuthority(p.getName().name()));
+        return Stream.concat(roleStream, permissionStream)
+                .collect(Collectors.toSet());
     }
 
     @Override

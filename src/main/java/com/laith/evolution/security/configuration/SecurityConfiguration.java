@@ -1,8 +1,8 @@
 package com.laith.evolution.security.configuration;
 
 import com.laith.evolution.security.filter.GlobalJwtAuthenticationFilter;
-import com.laith.evolution.security.handler.JwtAccessDeniedHandler;
-import com.laith.evolution.security.handler.JwtAuthenticationEntryPoint;
+import com.laith.evolution.exceptions.handler.JwtAccessDeniedHandler;
+import com.laith.evolution.exceptions.handler.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,7 +49,7 @@ public class SecurityConfiguration {
     }
 
 
-    @Bean
+   /* @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:8005"));
@@ -58,5 +58,5 @@ public class SecurityConfiguration {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
-    }
+    }*/
 }

@@ -3,6 +3,7 @@ package com.laith.evolution.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laith.evolution.dto.ErrorResponseDto;
 import com.laith.evolution.model.Client;
+import com.laith.evolution.model.Role;
 import com.laith.evolution.repositories.ClientRepository;
 import com.laith.evolution.security.model.ClientDetailsImpl;
 import com.laith.evolution.security.service.JwtUtility;
@@ -24,7 +25,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.stream.Stream;
 
 @Log
 @Component
@@ -33,7 +35,8 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtility jwtService;
     private final ClientRepository clientRepository;
-    private static final List<String> EXCLUDED_PATHS = List.of("/api/oauth/token", "/api/oauth/refresh");
+    private static final List<String> EXCLUDED_PATHS = List.of("/api/oauth/token",
+            "/api/oauth/refresh");
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -65,17 +68,21 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                         .orElseThrow(() -> new BadCredentialsException("Client not found"));
 
                 if (!jwtService.isTokenValid(jwt, new ClientDetailsImpl(client))) {
-                    sendErrorResponse(response, "Invalid token", HttpServletResponse.SC_UNAUTHORIZED);
+                    sendErrorResponse(response, "Invalid token",
+                            HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }
 
-                List<SimpleGrantedAuthority> authorities = client.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-                        .collect(Collectors.toList());
+                List<SimpleGrantedAuthority> authorities = Stream.concat(
+                  client.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName())),
+                  client.getRoles().stream()
+                          .map(Role::getPermissions)
+                           .flatMap(Set::stream)
+                    .map(p -> new SimpleGrantedAuthority(p.getName().name()))).toList();
 
                 SecurityContextHolder.getContext().setAuthentication(
-                        new UsernamePasswordAuthenticationToken(client, null, authorities)
-                );
+               new UsernamePasswordAuthenticationToken(client, null, authorities));
 
                 log.info(() -> "JWT token is valid for client: " + clientId);
             }
@@ -84,26 +91,30 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (ExpiredJwtException e) {
             log.warning("JWT expired: " + e.getMessage());
-            sendErrorResponse(response, "Token expired", HttpServletResponse.SC_UNAUTHORIZED);
+            sendErrorResponse(response, "Token expired",
+                    HttpServletResponse.SC_UNAUTHORIZED);
 
         } catch (BadCredentialsException e) {
-            sendErrorResponse(response, "Invalid token", HttpServletResponse.SC_UNAUTHORIZED);
+            sendErrorResponse(response, "Invalid token",
+                    HttpServletResponse.SC_UNAUTHORIZED);
 
         } catch (Exception e) {
             log.severe("Server error: " + e.getMessage());
-            sendErrorResponse(response, "Server error", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            sendErrorResponse(response, "Server error",
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
-    private void sendErrorResponse(HttpServletResponse response, String message, int status) throws IOException {
+    private void sendErrorResponse(HttpServletResponse response,
+        String message, int status) throws IOException {
         response.setStatus(status);
         response.setContentType("application/json");
         ObjectMapper mapper = new ObjectMapper();
         response.getWriter().write(mapper.writeValueAsString(
                 ErrorResponseDto.builder()
-                        .error(status == HttpServletResponse.SC_UNAUTHORIZED ?
-                                "unauthorized" : "server_error")
-                        .errorDescription(message)
-                        .build()));
+                  .error(status == HttpServletResponse.SC_UNAUTHORIZED ?
+                   "unauthorized" : "server_error")
+                   .errorDescription(message)
+                   .build()));
     }
 }

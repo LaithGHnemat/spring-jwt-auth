@@ -1,4 +1,4 @@
-package com.laith.evolution.security.handler;
+package com.laith.evolution.exceptions.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laith.evolution.dto.ErrorResponseDto;
