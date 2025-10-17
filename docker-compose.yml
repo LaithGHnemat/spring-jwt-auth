@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.8"
 
 services:
   mysqldb:
@@ -9,26 +9,38 @@ services:
       MYSQL_DATABASE: taskdb
     ports:
       - "3307:3306"
-    volumes:
-      - mysqldb_data:/var/lib/mysql
-    restart: always
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
 
   redis:
-    image: redis:7
+    image: redis:7-bookworm
     container_name: redis
     ports:
       - "6379:6379"
-    restart: always
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
 
-volumes:
-  mysqldb_data:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: springboot3-jwt-auth
+    container_name: springboot-app
+    depends_on:
+      - mysqldb
+      - redis
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    restart: always
