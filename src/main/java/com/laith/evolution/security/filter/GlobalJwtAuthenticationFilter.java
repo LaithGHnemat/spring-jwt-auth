@@ -3,11 +3,11 @@ package com.laith.evolution.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laith.evolution.dto.ErrorResponseDto;
 import com.laith.evolution.model.Client;
-import com.laith.evolution.model.Role;
 import com.laith.evolution.repositories.jpa.ClientRepository;
 import com.laith.evolution.security.model.ClientDetailsImpl;
 import com.laith.evolution.security.service.JwtUtility;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +25,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Stream;
 
 @Log
@@ -34,6 +33,7 @@ import java.util.stream.Stream;
 public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtility jwtService;
+    private final ObjectMapper objectMapper;
     private final ClientRepository clientRepository;
     private static final List<String> EXCLUDED_PATHS = List.of("/api/oauth/token",
             "/api/oauth/refresh");
@@ -73,13 +73,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                List<SimpleGrantedAuthority> authorities = Stream.concat(
-                  client.getRoles().stream()
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName())),
-                  client.getRoles().stream()
-                          .map(Role::getPermissions)
-                           .flatMap(Set::stream)
-                    .map(p -> new SimpleGrantedAuthority(p.getName().name()))).toList();
+                List<SimpleGrantedAuthority> authorities = mapRolesAndPermissions(client);
 
                 SecurityContextHolder.getContext().setAuthentication(
                new UsernamePasswordAuthenticationToken(client, null, authorities));
@@ -98,19 +92,34 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
             sendErrorResponse(response, "Invalid token",
                     HttpServletResponse.SC_UNAUTHORIZED);
 
-        } catch (Exception e) {
+        }
+        catch (JwtException e) {
+            log.warning("Invalid JWT: " + e.getMessage());
+            sendErrorResponse(response, "Invalid token", HttpServletResponse.SC_UNAUTHORIZED);
+        }
+
+        catch (Exception e) {
             log.severe("Server error: " + e.getMessage());
             sendErrorResponse(response, "Server error",
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
+    private List<SimpleGrantedAuthority> mapRolesAndPermissions(Client client) {
+        return Stream.concat(
+                client.getRoles().stream()
+                        .map(role ->
+                       new SimpleGrantedAuthority("ROLE_" + role.getName())),
+                client.getRoles().stream()
+                        .flatMap(role -> role.getPermissions().stream())
+                        .map(p ->
+                       new SimpleGrantedAuthority(p.getName().name()))).toList();
+    }
     private void sendErrorResponse(HttpServletResponse response,
         String message, int status) throws IOException {
         response.setStatus(status);
-        response.setContentType("application/json");
-        ObjectMapper mapper = new ObjectMapper();
-        response.getWriter().write(mapper.writeValueAsString(
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(
                 ErrorResponseDto.builder()
                   .error(status == HttpServletResponse.SC_UNAUTHORIZED ?
                    "unauthorized" : "server_error")
