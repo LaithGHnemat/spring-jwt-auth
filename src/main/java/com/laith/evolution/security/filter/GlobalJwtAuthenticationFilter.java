@@ -76,7 +76,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                 List<SimpleGrantedAuthority> authorities = mapRolesAndPermissions(client);
 
                 SecurityContextHolder.getContext().setAuthentication(
-               new UsernamePasswordAuthenticationToken(client, null, authorities));
+                        new UsernamePasswordAuthenticationToken(client, null, authorities));
 
                 log.info(() -> "JWT token is valid for client: " + clientId);
             }
@@ -87,18 +87,13 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
             log.warning("JWT expired: " + e.getMessage());
             sendErrorResponse(response, "Token expired",
                     HttpServletResponse.SC_UNAUTHORIZED);
-
         } catch (BadCredentialsException e) {
             sendErrorResponse(response, "Invalid token",
                     HttpServletResponse.SC_UNAUTHORIZED);
-
-        }
-        catch (JwtException e) {
+        } catch (JwtException e) {
             log.warning("Invalid JWT: " + e.getMessage());
             sendErrorResponse(response, "Invalid token", HttpServletResponse.SC_UNAUTHORIZED);
-        }
-
-        catch (Exception e) {
+        } catch (Exception e) {
             log.severe("Server error: " + e.getMessage());
             sendErrorResponse(response, "Server error",
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -106,24 +101,22 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private List<SimpleGrantedAuthority> mapRolesAndPermissions(Client client) {
-        return Stream.concat(
-                client.getRoles().stream()
-                        .map(role ->
-                       new SimpleGrantedAuthority("ROLE_" + role.getName())),
+        return Stream.concat(client.getRoles().stream().map(role ->
+                        new SimpleGrantedAuthority("ROLE_" + role.getName())),
                 client.getRoles().stream()
                         .flatMap(role -> role.getPermissions().stream())
-                        .map(p ->
-                       new SimpleGrantedAuthority(p.getName().name()))).toList();
+                        .map(p -> new SimpleGrantedAuthority(p.getName().name()))).toList();
     }
+
     private void sendErrorResponse(HttpServletResponse response,
-        String message, int status) throws IOException {
+                                   String message, int status) throws IOException {
         response.setStatus(status);
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(objectMapper.writeValueAsString(
                 ErrorResponseDto.builder()
-                  .error(status == HttpServletResponse.SC_UNAUTHORIZED ?
-                   "unauthorized" : "server_error")
-                   .errorDescription(message)
-                   .build()));
+                        .error(status == HttpServletResponse.SC_UNAUTHORIZED ?
+                                "unauthorized" : "server_error")
+                        .errorDescription(message)
+                        .build()));
     }
 }

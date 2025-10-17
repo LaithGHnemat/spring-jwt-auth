@@ -1,8 +1,8 @@
 package com.laith.evolution.security.configuration;
 
-import com.laith.evolution.security.filter.GlobalJwtAuthenticationFilter;
 import com.laith.evolution.exceptions.handler.JwtAccessDeniedHandler;
 import com.laith.evolution.exceptions.handler.JwtAuthenticationEntryPoint;
+import com.laith.evolution.security.filter.GlobalJwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,11 +14,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -27,9 +22,9 @@ import java.util.List;
 @Order(2)
 public class SecurityConfiguration {
 
-    private final GlobalJwtAuthenticationFilter globalJwtAuthenticationFilter;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final GlobalJwtAuthenticationFilter globalJwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
