@@ -36,5 +36,4 @@ public class Client {
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY)
     private Set<RefreshToken> refreshTokens;
-
 }

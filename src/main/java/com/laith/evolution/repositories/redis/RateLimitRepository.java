@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 public class RateLimitRepository {
 
     private final RedisTemplate<String, Object> redisTemplate;
+
     private static final String PREFIX = "rate-limit:";
 
     public int increment(String key, long durationInSeconds) {

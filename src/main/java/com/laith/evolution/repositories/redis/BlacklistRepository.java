@@ -14,7 +14,8 @@ public class BlacklistRepository {
     private static final String PREFIX = "blacklist:";
 
     public void addToBlacklist(String token, long durationInMinutes) {
-        redisTemplate.opsForValue().set(PREFIX + token, "BLACKLISTED", durationInMinutes, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(PREFIX + token, "BLACKLISTED",
+                durationInMinutes, TimeUnit.MINUTES);
     }
 
     public boolean isBlacklisted(String token) {
