@@ -38,6 +38,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/oauth/**").permitAll()
                         .requestMatchers("/api/data/client/**").hasRole("CLIENT")
                         .requestMatchers("/api/data/user/**").hasRole("USER")
+                        .requestMatchers("/api/aop-secured/**").hasRole("USER")
                         .anyRequest().authenticated())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

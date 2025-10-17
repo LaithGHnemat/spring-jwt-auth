@@ -45,7 +45,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponseDto("invalid_refresh_token", ex.getMessage()));
     }
+    @ExceptionHandler(TokenBlacklistedException.class)
+    public ResponseEntity<ErrorResponseDto> handleTokenBlacklisted(TokenBlacklistedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponseDto("token_blacklisted", ex.getMessage()));
+    }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponseDto> handleRateLimitExceeded(RateLimitExceededException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS) // 429
+                .body(new ErrorResponseDto("rate_limit_exceeded", ex.getMessage()));
+    }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGeneric(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

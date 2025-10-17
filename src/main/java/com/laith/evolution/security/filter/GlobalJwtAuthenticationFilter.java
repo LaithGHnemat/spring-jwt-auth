@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laith.evolution.dto.ErrorResponseDto;
 import com.laith.evolution.model.Client;
 import com.laith.evolution.model.Role;
-import com.laith.evolution.repositories.ClientRepository;
+import com.laith.evolution.repositories.jpa.ClientRepository;
 import com.laith.evolution.security.model.ClientDetailsImpl;
 import com.laith.evolution.security.service.JwtUtility;
 import io.jsonwebtoken.ExpiredJwtException;

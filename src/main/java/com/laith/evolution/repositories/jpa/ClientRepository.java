@@ -1,4 +1,4 @@
-package com.laith.evolution.repositories;
+package com.laith.evolution.repositories.jpa;
 
 import com.laith.evolution.model.Client;
 import org.springframework.data.jpa.repository.JpaRepository;

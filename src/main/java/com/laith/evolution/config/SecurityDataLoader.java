@@ -5,9 +5,9 @@ import com.laith.evolution.enums.RoleName;
 import com.laith.evolution.model.Client;
 import com.laith.evolution.model.Permission;
 import com.laith.evolution.model.Role;
-import com.laith.evolution.repositories.ClientRepository;
-import com.laith.evolution.repositories.PermissionRepository;
-import com.laith.evolution.repositories.RoleRepository;
+import com.laith.evolution.repositories.jpa.ClientRepository;
+import com.laith.evolution.repositories.jpa.PermissionRepository;
+import com.laith.evolution.repositories.jpa.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.springframework.boot.CommandLineRunner;
@@ -39,9 +39,16 @@ public class SecurityDataLoader {
     }
 
     private void setupDefaultAuthData() {
+        clientRepository.findAll().forEach(client -> client.getRoles().clear());
+        roleRepository.findAll().forEach(role -> role.getPermissions().clear());
+
+        clientRepository.flush();
+        roleRepository.flush();
+
         clientRepository.deleteAll();
         roleRepository.deleteAll();
         permissionRepository.deleteAll();
+
 
         Permission clientRead = Permission.builder()
                 .name(PermissionName.CLIENT_READ)
